@@ -1,0 +1,101 @@
+<html>
+    <head>
+        <meta charset="UTF-8" />
+        <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Astros</title>
+    </head>
+
+    <body>
+        <div>
+            <h3>1. Select your picture</h3>
+            <h5><i>These pictures are not uploaded anywhere, they only exist on your computer.</i></h5>
+            <input type="file" id="image">    
+        </div>
+        <div>
+            <h3>2. Download your frames</h3>
+            <h5><i>Right click the frame you like and click "Save image".</i></h5>
+            <canvas id="frame0" width="400" height="400"style="border:1px solid #d3d3d3;">
+                Your browser does not support the HTML5 canvas tag.
+            </canvas>
+            <canvas id="frame1" width="400" height="400"style="border:1px solid #d3d3d3;">
+                Your browser does not support the HTML5 canvas tag.
+            </canvas>
+            <canvas id="frame2" width="400" height="400"style="border:1px solid #d3d3d3;">
+                Your browser does not support the HTML5 canvas tag.
+            </canvas>
+        </div>
+        <div>
+            <h3>3. Share on your socials!</h3>
+            <h5><i>Don't forget to tag us!</i></h5>
+        </div>
+    </body>
+
+    <script>
+        var URL = window.webkitURL || window.URL;
+
+        var frames = [
+            {
+                image: 'assets/ff-1-red-ig.png'
+            },
+            { 
+                image: 'assets/ff-1-blue-ig.png'
+            },
+            {
+                image: 'assets/space-ig.png'
+            }
+        ];
+
+        window.onload = function() {
+            var input = document.getElementById('image');
+            input.addEventListener('change', handleFiles, false);
+            drawAllFrames();
+        }
+
+        function handleFiles(e) {
+            var url = URL.createObjectURL(e.target.files[0]);
+            drawAllFrames(url);       
+        }
+
+        function drawAllFrames(imageUrl) {
+            for (var i = 0; i < frames.length; i++) {
+                drawFramedImage(i, frames[i].image, imageUrl);
+            }
+        }
+
+        function drawFramedImage(frameNumber, frameUrl, imageUrl) {
+            var canvas = document.getElementById(`frame${frameNumber}`);
+            var ctx = canvas.getContext('2d');
+
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            var frame = new Image();
+            frame.onload = function() {
+                drawImageOnCanvas(canvas, ctx, frame, this.width, this.height);
+            }
+
+            if (imageUrl) {
+                var image = new Image();
+                image.onload = function() {
+                    drawImageOnCanvas(canvas, ctx, image, this.width, this.height);
+                    frame.src = frameUrl;
+                }
+
+                image.src = imageUrl;  
+            } else {
+                frame.src = frameUrl;
+            }
+        }
+
+        function drawImageOnCanvas(canvas, ctx, image, width, height) {
+            var targetScale = Math.max(height / canvas.height, width / canvas.width);
+
+            ctx.drawImage(
+                image,
+                (canvas.width - (width / targetScale)) / 2,
+                (canvas.height - (height / targetScale)) / 2,
+                width / targetScale,
+                height / targetScale);
+        }
+
+    </script>
+</html>
