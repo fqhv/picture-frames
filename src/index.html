@@ -6,96 +6,192 @@
         <title>Astros</title>
     </head>
 
-    <body>
-        <div>
-            <h3>1. Select your picture</h3>
-            <h5><i>These pictures are not uploaded anywhere, they only exist on your computer.</i></h5>
-            <input type="file" id="image">    
+<body>
+    <script src="https://kit.fontawesome.com/e81f3ef479.js" crossorigin="anonymous"></script>
+    <div>
+        <h3>1. Select your picture</h3>
+        <p><i>These pictures are not uploaded anywhere, they only exist on your device.</i></p>
+        <input type="file" id="image">
+    </div>
+    <div>
+        <h3>2. Download your framed picture</h3>
+        <div id="frames" class="frames-container">
         </div>
-        <div>
-            <h3>2. Download your frames</h3>
-            <h5><i>Right click the frame you like and click "Save image".</i></h5>
-            <canvas id="frame0" width="400" height="400"style="border:1px solid #d3d3d3;">
-                Your browser does not support the HTML5 canvas tag.
-            </canvas>
-            <canvas id="frame1" width="400" height="400"style="border:1px solid #d3d3d3;">
-                Your browser does not support the HTML5 canvas tag.
-            </canvas>
-            <canvas id="frame2" width="400" height="400"style="border:1px solid #d3d3d3;">
-                Your browser does not support the HTML5 canvas tag.
-            </canvas>
-        </div>
-        <div>
-            <h3>3. Share on your socials!</h3>
-            <h5><i>Don't forget to tag us!</i></h5>
-        </div>
-    </body>
+    </div>
+    <div>
+        <h3>3. Share on your socials!</h3>
+        <p>
+            Be sure to share the name of your child's teacher as well as a link to the fundraiser donation page!
+            <br>
+            <a href="https://columbia.memberhub.com/store/items/768937">https://columbia.memberhub.com/store/items/768937</a>
+            <br>
+            <br>
+            <b>Don't forget to tag us!</b>
+            <div>
+                <div><i class="fa-brands fa-facebook fa-2x"></i> <b>@CESelemPTA</b></div>
+                <div><i class="fa-brands fa-twitter fa-2x"></i> <b>@ColumbiaElePTA</b></div>
+                <div><i class="fa-brands fa-instagram fa-2x"></i> <b>@ColumbiaElementaryPTA</b></div>
+            </div>
+        </p>
+    </div>
+    <canvas id="workbench" style="display:none"></canvas>
+</body>
 
-    <script>
-        var URL = window.webkitURL || window.URL;
+<script>
+    var URL = window.webkitURL || window.URL;
+    var imageUrl = null;
+    var imageName = null;
 
-        var frames = [
-            {
-                image: 'assets/ff-1-red-ig.png'
-            },
-            { 
-                image: 'assets/ff-1-blue-ig.png'
-            },
-            {
-                image: 'assets/space-ig.png'
-            }
-        ];
+    var frames = [
+        {
+            name: 'ces-frame-red',
+            image: 'files/theme/frames/ff-1-red-ig.png'
+        },
+        {
+            name: 'ces-frame-blue',
+            image: 'files/theme/frames/ff-1-blue-ig.png'
+        },
+        {
+            name: 'ces-proud',
+            image: 'files/theme/frames/space-ig.png'
+        }
+    ];
 
-        window.onload = function() {
-            var input = document.getElementById('image');
-            input.addEventListener('change', handleFiles, false);
-            drawAllFrames();
+    window.onload = function() {
+        var input = document.getElementById('image');
+        input.addEventListener('change', handleFiles, false);
+        initializeFrameContainers();
+        drawAllFrames();
+    }
+
+    function handleFiles(e) {
+        imageUrl = null;
+        if (e.target.files.length > 0) {
+            imageUrl = URL.createObjectURL(e.target.files[0]);
+            imageName = removeFileType(e.target.files[0].name);
+        };
+        drawAllFrames();
+    }
+
+    function removeFileType(fileName) {
+        var fileTypeIndex = fileName.lastIndexOf('.');
+        if (fileTypeIndex === -1) {
+            return fileName;
         }
 
-        function handleFiles(e) {
-            var url = URL.createObjectURL(e.target.files[0]);
-            drawAllFrames(url);       
-        }
+        return fileName.substring(0, fileTypeIndex);
+    }
 
-        function drawAllFrames(imageUrl) {
-            for (var i = 0; i < frames.length; i++) {
-                drawFramedImage(i, frames[i].image, imageUrl);
+    function drawAllFrames() {
+        for (var i = 0; i < frames.length; i++) {
+            drawFramedImage(i, frames[i].image);
+        }
+    }
+
+    function drawFramedImage(frameNumber, frameUrl) {
+        var canvas = document.getElementById(`frame${frameNumber}`);
+        drawFramedImageOnCanvas(canvas, frameUrl);
+    }
+
+    function drawFramedImageOnCanvas(canvas, frameUrl, callback) {
+        var ctx = canvas.getContext('2d');
+
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        var frame = new Image();
+        frame.onload = function() {
+            drawImageOnCanvas(canvas, ctx, frame, this.width, this.height);
+
+            if (callback) {
+                callback();
             }
         }
 
-        function drawFramedImage(frameNumber, frameUrl, imageUrl) {
-            var canvas = document.getElementById(`frame${frameNumber}`);
-            var ctx = canvas.getContext('2d');
-
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            var frame = new Image();
-            frame.onload = function() {
-                drawImageOnCanvas(canvas, ctx, frame, this.width, this.height);
-            }
-
-            if (imageUrl) {
-                var image = new Image();
-                image.onload = function() {
-                    drawImageOnCanvas(canvas, ctx, image, this.width, this.height);
-                    frame.src = frameUrl;
-                }
-
-                image.src = imageUrl;  
-            } else {
+        if (imageUrl) {
+            var image = new Image();
+            image.onload = function() {
+                drawImageOnCanvas(canvas, ctx, image, this.width, this.height);
                 frame.src = frameUrl;
             }
+
+            image.src = imageUrl;
+        } else {
+            frame.src = frameUrl;
         }
+    }
 
-        function drawImageOnCanvas(canvas, ctx, image, width, height) {
-            var targetScale = Math.max(height / canvas.height, width / canvas.width);
+    function drawImageOnCanvas(canvas, ctx, image, width, height) {
+        var targetScale = Math.max(height / canvas.height, width / canvas.width);
 
-            ctx.drawImage(
-                image,
-                (canvas.width - (width / targetScale)) / 2,
-                (canvas.height - (height / targetScale)) / 2,
-                width / targetScale,
-                height / targetScale);
+        ctx.drawImage(
+            image,
+            (canvas.width - (width / targetScale)) / 2,
+            (canvas.height - (height / targetScale)) / 2,
+            width / targetScale,
+            height / targetScale);
+    }
+
+    function initializeFrameContainers() {
+        var framesContainer = document.getElementById("frames");
+
+        for (var i = 0; i < frames.length; i++) {
+            var frameContainer = document.createElement('div');
+            frameContainer.className = 'frame-container';
+
+            var canvas = document.createElement('canvas');
+            canvas.id = `frame${i}`;
+            canvas.height = 300;
+            canvas.width = 300;
+            frameContainer.appendChild(canvas);
+
+            var downloadButton = document.createElement('button');
+            downloadButton.innerHTML = '<i class="fa-solid fa-download fa-2x"></i> Download';
+            downloadButton.className = 'btn-downloadframe';
+            downloadButton.data = i;
+            downloadButton.onclick = (e) => downloadFrame(e.srcElement.data);
+            frameContainer.appendChild(downloadButton);
+
+            framesContainer.appendChild(frameContainer);
         }
+    }
 
-    </script>
+    function downloadFrame(frameNumber) {
+        var frame = frames[frameNumber];
+        var frameImage = frame.image;
+        var canvas = document.getElementById('workbench');
+
+        canvas.height = 1000;
+        canvas.width = 1000;
+
+        drawFramedImageOnCanvas(canvas, frameImage, () => downloadCanvasImage(canvas, frame.name));
+    }
+
+    function downloadCanvasImage(canvas, frameName) {
+            var a = document.createElement('a');
+            a.href = canvas.toDataURL('image/png');
+            a.download =  imageName ? `${frameName}-${imageName}.png` : `${frameName}.png`;
+            a.click();
+    }
+</script>
+
+<style>
+    .frames-container {
+        display: flex;
+        justify-content: left;
+        flex-wrap: wrap;
+    }
+
+    .frame-container {
+        margin: 8px;
+    }
+
+    .frame-container > canvas {
+        display: block;
+        margin-bottom: 3px;
+    }
+
+    .btn-downloadframe {
+        cursor: pointer;
+    }
+</style>
+
 </html>
