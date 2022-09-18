@@ -44,16 +44,34 @@
 
     var frames = [
         {
+            name: 'ces-principal-fb',
+            image: 'files/theme/frames/make-me-principal-fb.png',
+            height: 788,
+            width: 940
+        },
+        {
+            name: 'ces-principal-ig',
+            image: 'files/theme/frames/make-me-principal-ig.png',
+            height: 1800,
+            width: 1800
+        },
+        {
             name: 'ces-frame-red',
-            image: 'files/theme/frames/ff-1-red-ig.png'
+            image: 'files/theme/frames/ff-1-red-ig.png',
+            height: 1800,
+            width: 1800
         },
         {
             name: 'ces-frame-blue',
-            image: 'files/theme/frames/ff-1-blue-ig.png'
+            image: 'files/theme/frames/ff-1-blue-ig.png',
+            height: 1800,
+            width: 1800
         },
         {
             name: 'ces-proud',
-            image: 'files/theme/frames/space-ig.png'
+            image: 'files/theme/frames/space-ig.png',
+            height: 1800,
+            width: 1800
         }
     ];
 
@@ -84,19 +102,20 @@
 
     function drawAllFrames() {
         for (var i = 0; i < frames.length; i++) {
-            drawFramedImage(i, frames[i].image);
+            drawFramedImage(i, frames[i]);
         }
     }
 
-    function drawFramedImage(frameNumber, frameUrl) {
+    function drawFramedImage(frameNumber, frame) {
         var canvas = document.getElementById(`frame${frameNumber}`);
-        drawFramedImageOnCanvas(canvas, frameUrl);
+        drawFramedImageOnCanvas(canvas, frame);
     }
 
-    function drawFramedImageOnCanvas(canvas, frameUrl, callback) {
+    function drawFramedImageOnCanvas(canvas, frameInfo, callback) {
         var ctx = canvas.getContext('2d');
 
         ctx.clearRect(0, 0, canvas.width, canvas.height);
+
         var frame = new Image();
         frame.onload = function() {
             drawImageOnCanvas(canvas, ctx, frame, this.width, this.height);
@@ -109,25 +128,38 @@
         if (imageUrl) {
             var image = new Image();
             image.onload = function() {
-                drawImageOnCanvas(canvas, ctx, image, this.width, this.height);
-                frame.src = frameUrl;
+                drawImageOnCanvas(canvas, ctx, image, this.width, this.height, canvas.height * 0.08, canvas.height * 0.08);
+                frame.src = frameInfo.image;
             }
 
             image.src = imageUrl;
         } else {
-            frame.src = frameUrl;
+            frame.src = frameInfo.image;
         }
     }
 
-    function drawImageOnCanvas(canvas, ctx, image, width, height) {
-        var targetScale = Math.max(height / canvas.height, width / canvas.width);
+    function drawImageOnCanvas(canvas, ctx, image, width, height, offsetX, offsetY) {
+        // default offset to none
+        offsetX = offsetX || 0;
+        offsetY = offsetY || 0;
+
+        // reduce target area by offset
+        var targetWidth = canvas.width - offsetX * 2;
+        var targetHeight = canvas.height - offsetY * 2;
+
+        // get the scale (use the side that has the farthest to go)
+        var targetScale = Math.min(height / targetHeight, width / targetWidth);
+
+        // set the target area from the scaled image area
+        targetWidth = width / targetScale;
+        targetHeight = height / targetScale;
 
         ctx.drawImage(
             image,
-            (canvas.width - (width / targetScale)) / 2,
-            (canvas.height - (height / targetScale)) / 2,
-            width / targetScale,
-            height / targetScale);
+            (canvas.width - targetWidth) / 2 + offsetX,
+            (canvas.height - targetHeight) / 2 + offsetY,
+            targetWidth,
+            targetHeight);
     }
 
     function initializeFrameContainers() {
@@ -137,16 +169,21 @@
             var frameContainer = document.createElement('div');
             frameContainer.className = 'frame-container';
 
+            var frame = frames[i];
+
             var canvas = document.createElement('canvas');
             canvas.id = `frame${i}`;
-            canvas.height = 300;
-            canvas.width = 300;
+
+            var canvasScale = 300 / frame.height;
+            canvas.height = frame.height * canvasScale;
+            canvas.width = frame.width * canvasScale;
             frameContainer.appendChild(canvas);
 
             var downloadButton = document.createElement('button');
             downloadButton.innerHTML = '<i class="fa-solid fa-download fa-2x"></i> Download';
             downloadButton.className = 'btn-downloadframe';
             downloadButton.data = i;
+            downloadButton.title = frame.name;
             downloadButton.onclick = (e) => downloadFrame(e.srcElement.data);
             frameContainer.appendChild(downloadButton);
 
@@ -156,13 +193,12 @@
 
     function downloadFrame(frameNumber) {
         var frame = frames[frameNumber];
-        var frameImage = frame.image;
         var canvas = document.getElementById('workbench');
 
-        canvas.height = 1000;
-        canvas.width = 1000;
+        canvas.height = frame.height;
+        canvas.width = frame.width;
 
-        drawFramedImageOnCanvas(canvas, frameImage, () => downloadCanvasImage(canvas, frame.name));
+        drawFramedImageOnCanvas(canvas, frame, () => downloadCanvasImage(canvas, frame.name));
     }
 
     function downloadCanvasImage(canvas, frameName) {
@@ -178,6 +214,7 @@
         display: flex;
         justify-content: left;
         flex-wrap: wrap;
+        min-height: 300px;
     }
 
     .frame-container {
