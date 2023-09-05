@@ -13,17 +13,19 @@
         <p><i>These pictures are not uploaded anywhere, they only exist on your device.</i></p>
         <input type="file" id="image">
     </div>
+    <br>
     <div>
         <h3>2. Download your framed picture</h3>
         <div id="frames" class="frames-container">
         </div>
     </div>
+    <br>
     <div>
         <h3>3. Share on your socials!</h3>
         <p>
             Be sure to share the name of your child's teacher as well as a link to the fundraiser donation page!
             <br>
-            <a href="https://columbia.memberhub.com/store/items/768937">https://columbia.memberhub.com/store/items/768937</a>
+            <a href="https://columbia.memberhub.com/store/items/908705">https://columbia.memberhub.com/store/items/908705</a>
             <br>
             <br>
             <b>Don't forget to tag us!</b>
@@ -44,34 +46,76 @@
 
     var frames = [
         {
-            name: 'ces-principal-fb',
-            image: 'files/theme/frames/make-me-principal-fb.png',
-            height: 788,
-            width: 940
-        },
-        {
-            name: 'ces-principal-ig',
-            image: 'files/theme/frames/make-me-principal-ig.png',
-            height: 1800,
-            width: 1800
-        },
-        {
-            name: 'ces-frame-red',
-            image: 'files/theme/frames/ff-1-red-ig.png',
-            height: 1800,
-            width: 1800
-        },
-        {
-            name: 'ces-frame-blue',
-            image: 'files/theme/frames/ff-1-blue-ig.png',
-            height: 1800,
-            width: 1800
+            name: 'ces-support',
+            image: 'files/theme/frames/support-ig.png',
+            height: 1080,
+            width: 1080,
+            imageArea: {
+                x: 50,
+                y: 50,
+                width: 980,
+                height: 830
+            }
         },
         {
             name: 'ces-proud',
             image: 'files/theme/frames/space-ig.png',
-            height: 1800,
-            width: 1800
+            height: 1080,
+            width: 1080,
+            imageArea: {
+                x: 160,
+                y: 170,
+                width: 760,
+                height: 680
+            }
+        },
+        {
+            name: 'ces-principal-fb',
+            image: 'files/theme/frames/make-me-principal-fb.png',
+            height: 788,
+            width: 940,
+            imageArea: {
+                x: 180,
+                y: 185,
+                width: 580,
+                height: 400
+            }
+        },
+        {
+            name: 'ces-principal-ig',
+            image: 'files/theme/frames/make-me-principal-ig.png',
+            height: 1080,
+            width: 1080,
+            imageArea: {
+                x: 200,
+                y: 280,
+                width: 660,
+                height: 460
+            }
+        },
+        {
+            name: 'ces-frame-red',
+            image: 'files/theme/frames/ff-1-red-ig.png',
+            height: 1080,
+            width: 1080,
+            imageArea: {
+                x: 190,
+                y: 250,
+                width: 710,
+                height: 475
+            }
+        },
+        {
+            name: 'ces-frame-blue',
+            image: 'files/theme/frames/ff-1-blue-ig.png',
+            height: 1080,
+            width: 1080,
+            imageArea: {
+                x: 190,
+                y: 250,
+                width: 710,
+                height: 475
+            }
         }
     ];
 
@@ -118,7 +162,7 @@
 
         var frame = new Image();
         frame.onload = function() {
-            drawImageOnCanvas(canvas, ctx, frame, this.width, this.height);
+            drawFrameOnCanvas(canvas, ctx, frame, this.width, this.height);
 
             if (callback) {
                 callback();
@@ -128,7 +172,10 @@
         if (imageUrl) {
             var image = new Image();
             image.onload = function() {
-                drawImageOnCanvas(canvas, ctx, image, this.width, this.height, canvas.height * 0.08, canvas.height * 0.08);
+                var imageX = (frameInfo.imageX || 100) * (this.width / frameInfo.width);
+                var imageY = (frameInfo.imageY || 100) * (this.height / frameInfo.height);
+
+                drawImageOnFrameOnCanvas(canvas, ctx, image, this.width, this.height, frameInfo);
                 frame.src = frameInfo.image;
             }
 
@@ -138,28 +185,65 @@
         }
     }
 
-    function drawImageOnCanvas(canvas, ctx, image, width, height, offsetX, offsetY) {
-        // default offset to none
-        offsetX = offsetX || 0;
-        offsetY = offsetY || 0;
-
-        // reduce target area by offset
-        var targetWidth = canvas.width - offsetX * 2;
-        var targetHeight = canvas.height - offsetY * 2;
-
-        // get the scale (use the side that has the farthest to go)
-        var targetScale = Math.min(height / targetHeight, width / targetWidth);
+    function drawFrameOnCanvas(canvas, ctx, image, frameWidth, frameHeight) {
+        // scale the frame to the current canvas size
+        var targetScale = this.getScale(canvas.width, canvas.height, frameWidth, frameHeight);
 
         // set the target area from the scaled image area
-        targetWidth = width / targetScale;
-        targetHeight = height / targetScale;
+        var targetWidth = frameWidth / targetScale;
+        var targetHeight = frameHeight / targetScale;
+
+        // calculate top left corner of image
+        var topLeftX = canvas.width - targetWidth;
+        var topLeftY = canvas.height - targetHeight;
 
         ctx.drawImage(
             image,
-            (canvas.width - targetWidth) / 2 + offsetX,
-            (canvas.height - targetHeight) / 2 + offsetY,
+            topLeftX,
+            topLeftY,
             targetWidth,
             targetHeight);
+    }
+
+    function drawImageOnFrameOnCanvas(canvas, ctx, image, imageWidth, imageHeight, frameInfo) {
+        // get initial values for target area, this is relative to the original frame size
+        var topLeftX = (frameInfo && frameInfo.imageArea && frameInfo.imageArea.x) || 50;
+        var topLeftY = (frameInfo && frameInfo.imageArea && frameInfo.imageArea.y) || 50;
+
+        var framedWidth = (frameInfo && frameInfo.imageArea && frameInfo.imageArea.width) || frameInfo.width - 100;
+        var framedHeight = (frameInfo && frameInfo.imageArea && frameInfo.imageArea.height) || frameInfo.height - 100;
+
+        // scale initial values to canvas (equivalent of fitting the framed area into the canvas)
+        var targetScale = this.getScale(canvas.width, canvas.height, frameInfo.width, frameInfo.height);
+        topLeftX = topLeftX / targetScale;
+        topLeftY = topLeftY / targetScale;
+        framedWidth = framedWidth / targetScale;
+        framedHeight = framedHeight / targetScale;
+
+        // now fit the image into the framed area
+        targetScale = this.getScale(framedWidth, framedHeight, imageWidth, imageHeight);
+        var targetWidth = imageWidth / targetScale;
+        var targetHeight = imageHeight / targetScale;
+
+        // shift the corner to center the image on the long side
+        topLeftX = topLeftX - ((targetWidth - framedWidth) / 2);
+        topLeftY = topLeftY - ((targetHeight - framedHeight) / 2);
+
+        ctx.drawImage(
+            image,
+            topLeftX,
+            topLeftY,
+            targetWidth,
+            targetHeight);
+    }
+
+    function getScale(containerWidth, containerHeight, imageWidth, imageHeight) {
+        // determine how much the image needs to be scaled to fit each side perfect
+        var widthScale = imageWidth / containerWidth;
+        var heightScale = imageHeight / containerHeight;
+
+        // get the scale (use the side that has the farthest to go)
+        return Math.min(widthScale, heightScale);
     }
 
     function initializeFrameContainers() {
@@ -174,9 +258,10 @@
             var canvas = document.createElement('canvas');
             canvas.id = `frame${i}`;
 
-            var canvasScale = 300 / frame.height;
-            canvas.height = frame.height * canvasScale;
-            canvas.width = frame.width * canvasScale;
+            // draw frames with a max side length of 300, but maintain ratio
+            var maxTargetSize = 300;
+            canvas.height = frame.height >= frame.width ? maxTargetSize : maxTargetSize * (frame.height / frame.width);
+            canvas.width = frame.width >= frame.height ? maxTargetSize : maxTargetSize * (frame.width / frame.height);
             frameContainer.appendChild(canvas);
 
             var downloadButton = document.createElement('button');
